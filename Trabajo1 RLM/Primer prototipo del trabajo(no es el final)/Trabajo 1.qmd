@@ -1,0 +1,770 @@
+---
+title: "Modelo predictivo de los precios de los computadores portatiles con base en sus diversos componentes"
+author: "David Villegas, Jeferson Cardona"
+lang: es
+theme: lux
+format: 
+  html:
+    toc: true
+    toc-location: left
+    number-selections: true
+editor: visual
+bibliography: references.bib
+---
+
+```{r include = FALSE}
+knitr:: opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+library(readr)
+LLL <- read_csv("LLL.csv")
+View(LLL)
+```
+
+![Trabajo 1](imagen.jpeg)
+
+## Problematica
+
+La predicción de precios de computadores portátiles debe considerar varios factores clave. Estas máquinas están diseñadas para atender una amplia gama de necesidades, desde trabajo y educación hasta gaming y entretenimiento, lo que se traduce en una diversidad de configuraciones que varían en rendimiento y portabilidad. A medida que la tecnología avanza, es probable que veamos fluctuaciones en los precios, influenciadas por la introducción de nuevos componentes, la demanda del mercado y la competencia entre marcas. La flexibilidad en las opciones de configuración también significa que los consumidores podrán encontrar modelos que se ajusten a su presupuesto, lo que podría estabilizar los precios en el sector de portátiles en el futuro cercano. Por ello, en este trabajo se pretende realizar la predicción del precio de un computador portatil, a partir de ciertos factores de interés.
+
+## Planteamiento
+
+A través del análisis de los datos se pretende responder a las siguientes preguntas.
+
+#### Pregunta Principal
+
+-   ¿Las características técnicas de un portátil, como la RAM, almacenamiento, tamaño de la pantalla, peso y duración de la batería, afectan el precio del dispositivo?
+
+#### Preguntas auxiliares
+
+-   ¿Qué componente tiene el mayor impacto en el precio de los portátiles: RAM, almacenamiento, peso, tamaño de pantalla o duración de la batería?
+
+-   ¿Cuál es la combinación de características técnicas que mejor explica las variaciones en el precio de las laptops?
+
+## Objetivo
+
+#### Objetivo general
+
+Analizar la relación entre las características técnicas de los cumputadores portátiles y su impacto en el precio, mediante un modelo de regresión lineal múltiple.
+
+#### Objetivos especificos
+
+-   Identificar cuál de las variables técnicas seleccionadas tiene el mayor impacto en la predicción del precio de una laptop, y evaluar la relación significativa entre la duración de la batería y el precio.
+
+-   Determinar la combinación de características técnicas que mejor explica las variaciones en el precio de las laptops.
+
+## Datos
+
+El conjunto de datos que se analizaran corresponde a 3000 observaciones y 12 variables, de las cuales 4 son cuantitativas y 8 son cualitativas. La @tbl-Tabla1 presenta una descripción de la clasificación de las variables.
+
+| Variable          | Tipo         |
+|-------------------|--------------|
+| Marca             | Cualitativa  |
+| Modelo            | Cualitativa  |
+| Procesador        | Cualitativa  |
+| RAM               | Cualitativa  |
+| Almacentamiento   | Cualitativa  |
+| Pantalla          | Cualitativa  |
+| Tarjeta Grafica   | Cualitativa  |
+| Sistema Operativo | Cualitativa  |
+| Peso              | Cuantitativa |
+| Bateria           | Cuantitativa |
+| Precio            | Cuantitativa |
+| Garantia          | Cualitativa  |
+
+: Clasificación de variables {#tbl-Tabla1}
+
+## 1. Análisis exploratorio base de datos
+
+Para realizar el analisis de nuestra base de datos primero redefinimos los nombres de las variables.
+
+```{r}
+colnames(LLL) <- c("Marca", "Modelo", "Procesador", "RAM", "Almacenamiento",
+                   "Pantalla", "TarjetaGrafica", "SistemaOperativo", "Peso",
+                   "Bateria", "Precio", "Garantia")
+```
+
+Al definir el tipo de variable de cada una de las presentes en la base de datos, haremos los cambios necesarios, para que el entorno de R studio no genere errores de lectura y podamos hacer un análisis exploratorio exitoso, por medio de gráficas Boxplot para las variables cualitativas. Para las cuantitativas usaremos gráficos de dispersión que permitan comprender facilmente el comportamiento de estas frente al precio de las computadoras.
+
+Categorización de las variables cualitativas
+
+```{r}
+LLL$Marca <- as.factor(LLL$Marca)
+LLL$Procesador <- as.factor(LLL$Procesador)
+LLL$RAM <- as.factor(LLL$RAM)
+LLL$Almacenamiento <- as.factor(LLL$Almacenamiento)
+LLL$TarjetaGrafica <- as.factor(LLL$TarjetaGrafica)
+LLL$SistemaOperativo <- as.factor(LLL$SistemaOperativo)
+LLL$Garantia <- as.factor(LLL$Garantia)
+LLL$Pantalla <- as.factor(LLL$Pantalla)
+summary(LLL)
+```
+
+Observamos que ya nuestras variables cualitativas se encuentran categorizadas, y procedemos a gráficar cada variable respecto al precio para definir sus comportamientos.
+
+### Gráficos para las variables cualitativas
+
+#### Marca \~ Precio
+
+**No hay grandes diferencias** en la distribución de los precios entre las marcas analizadas. La mayoría de las marcas tienen una mediana de precios similar, entre 1.500 y 2.000, y una distribución comparable, la marca que mas alta tiene su mediana es Asus, y la mas baja es Acer. Esto sugiere que las marcas no se diferencian en cuanto al **precio general** de sus computadoras.
+
+```{r}
+library(ggplot2)
+```
+
+```{r}
+G1 <- ggplot(LLL, aes(x = Marca, y = Precio)) + 
+  stat_boxplot(geom = "errorbar",
+               width = 0.25) +
+  geom_boxplot(fill = "dodgerblue1",
+               colour = "black",
+               alpha = 0.5,
+               outlier.colour = "tomato2")
+G1
+
+```
+
+#### Procesador \~ Precio
+
+-   **No hay grandes diferencias** en la distribución de los precios comparado con los diferentes procesadores. Cada procesador cuenta con amplia variedad en precios, presentando todos medianas similares, entre \$1500 y \$2000 indicando que todos se distribuyen de manera similar. Como los precios se distribuyen de manera similar, encontramos que la mediana mas grande es la de la marca Intel I9, y la mas baja la de la marca Intel I5, en todos los casos, esto sugiere que el **procesador** no es un factor determinante para establecer un precio más bajo o más alto.
+
+```{r}
+G2 <- ggplot(LLL, aes(x = Procesador, y = Precio)) + 
+  stat_boxplot(geom = "errorbar",
+               width = 0.25) +
+  geom_boxplot(fill = "dodgerblue1",
+               colour = "black",
+               alpha = 0.5,
+               outlier.colour = "tomato2")
+G2
+```
+
+#### RAM \~ Precio
+
+-   La memoria RAM tampoco presenta variaciones apreciables para definir a esta como un único factor para determinar el precio de un computador. Presentan igualmente un rango de precio similar, con medianas entre 1.500 y 2.000, siendo la RAM de 16 GB y 64 GB iguales y mas altas que las de 8 GB y 32 GB que tambien son iguales, y mas bajas.
+
+```{r}
+G3 <- ggplot(LLL, aes(x = RAM, y = Precio)) + 
+  stat_boxplot(geom = "errorbar",
+               width = 0.25) +
+  geom_boxplot(fill = "dodgerblue1",
+               colour = "black",
+               alpha = 0.5,
+               outlier.colour = "tomato2")
+G3
+```
+
+#### Almacenamiento \~ Precio
+
+-   El espacio de almacenamiento tampoco presenta variaciones apreciables para definir a este como un único factor para determinar el precio de un computador. Presentan igualmente unidades entre un rango de precio similar, sus medianas rondan entre 1.500 y 2.000, siendo la mediana de 256 GB de almacenamiento mas alta que las demas, y la de 512 GB mas baja.
+
+```{r}
+G4 <- ggplot(LLL, aes(x = Almacenamiento, y = Precio)) + 
+  stat_boxplot(geom = "errorbar",
+               width = 0.25) +
+  geom_boxplot(fill = "dodgerblue1",
+               colour = "black",
+               alpha = 0.5,
+               outlier.colour = "tomato2")
+G4
+```
+
+#### Tarjeta gráfica \~ Precio
+
+-   La tarjeta gráfica no presenta variaciones apreciables para definir a esta como un único factor para determinar el precio de un computador. Presentan igualmente unidades entre un rango de precio similar, de 1.500 y 2.000, siendo la mediana de Intel UHD mas alta, y Nvidia RTX 3070 mas baja, eso es un indicativo de indicando que es necesario continuar mirando otras variables que puedan explicar de mejor manera el precio.
+
+```{r}
+G5 <- ggplot(LLL, aes(x = TarjetaGrafica, y = Precio)) + 
+  stat_boxplot(geom = "errorbar",
+               width = 0.25) +
+  geom_boxplot(fill = "dodgerblue1",
+               colour = "black",
+               alpha = 0.5,
+               outlier.colour = "tomato2")
+G5
+```
+
+#### Sistema operativo \~ Precio
+
+-   El sistema operativo no presenta variaciones apreciables para definir a este como un único factor para determinar el precio de un computador. Las medianas siguen estando en un rango de 1.500 y 2.000, la mediana mas alta es la del sistema operativo MacOS, y la mas baja la del Windows 11.
+
+```{r}
+G6 <- ggplot(LLL, aes(x = SistemaOperativo, y = Precio)) + 
+  stat_boxplot(geom = "errorbar",
+               width = 0.25) +
+  geom_boxplot(fill = "dodgerblue1",
+               colour = "black",
+               alpha = 0.5,
+               outlier.colour = "tomato2")
+G6
+```
+
+#### Garantía \~ Precio
+
+-   Los años de garantía de un computador no presentan diferencias apreciables, pues los rangos de sus medianas rondan entre 1.500 y 2.000, siendo la mediana de 2 años de garantia mas baja que los otros años que tienen una misma mediana. A la hora de comprar un portatil puede ser este un factor a tener en cuenta de parte del comprador para mayor respaldo en cuanto al dispositivo que elija, pues hay amplia variedad en precios y ya dependerá de otros factores su decisión final. A pesar de ser un factor apreciable para un comprador, no es significativa para la creación de nuestro modelo.
+
+```{r}
+G7 <- ggplot(LLL, aes(x = Garantia, y = Precio)) + 
+  stat_boxplot(geom = "errorbar",
+               width = 0.25) +
+  geom_boxplot(fill = "dodgerblue1",
+               colour = "black",
+               alpha = 0.5,
+               outlier.colour = "tomato2")
+G7
+```
+
+#### Pantalla \~ Precio
+
+-   El rango de precios entre los tamaños de las pantallas tampoco muestra variaciones significativas, la mediana sigue estando en un rango de 1.500 y 2.000, teniendo en este caso como la mediana mas alta la de 17 pulgadas, y las otras medianas iguales. Los precios se distribuyen de manera similar en todos los casos. Esto sugiere que no es un factor determinante para establecer un precio claramente más bajo o más alto.
+
+```{r}
+G8 <- ggplot(LLL, aes(x = Pantalla, y = Precio)) + 
+  stat_boxplot(geom = "errorbar",
+               width = 0.25) +
+  geom_boxplot(fill = "dodgerblue1",
+               colour = "black",
+               alpha = 0.5,
+               outlier.colour = "tomato2")
+G8
+```
+
+#### RAM y Almacenamiento \~ Precio
+
+En el grafico podemos ver que las medianas son muy similares, y todas se encuentran entre 1.500 y 2.000, indicandonos que la pantalla y la RAM no son factores de los que dependa fuertemente el precio.
+
+```{r}
+G9 <- ggplot(LLL, aes(x = RAM, y = Precio)) + 
+  stat_boxplot(geom = "errorbar", width = 0.25) +
+  geom_boxplot(fill = "dodgerblue1", colour = "black", alpha = 0.5, outlier.colour = "tomato2") +
+  labs(title = "Comparación de Precio según la RAM y el Almacenamiento",
+       x = "RAM (GB)",
+       y = "Precio") +
+  facet_wrap(~ Almacenamiento) +
+  theme_minimal()
+G9
+```
+
+#### Pantalla y Garantia \~ Precio
+
+En el grafico podemos ver que las medianas son muy similares, y todas se encuentran entre 1.500 y 2.000, la pantalla y la garantia no parecen ser factores concluyentes en el precio de los pc.
+
+```{r}
+G10 <- ggplot(LLL, aes(x = Pantalla, y = Precio)) + 
+  stat_boxplot(geom = "errorbar", width = 0.25) +
+  geom_boxplot(fill = "dodgerblue1", colour = "black", alpha = 0.5, outlier.colour = "tomato2") +
+  labs(title = "Comparación de Precio según la Pantalla y la Garantia",
+       x = "RAM (GB)",
+       y = "Precio") +
+  facet_wrap(~ Garantia) +
+  theme_minimal()
+G10
+```
+
+### Conclusión general de los gráficos
+
+Tras analizar los boxplots de las **ocho variables cualitativas** respecto al **precio de las computadoras**, las medianas de los precios estuvieron constantemente entre los **1500 y 2000 dólares** para casi todas las categorías analizadas. Esto significa que, independientemente de la variable, los precios no muestran grandes diferencias, sugiriendo que los computadores dentro de esta muestra tienden a tener **precios similares**, independientemente de las características específicas.
+
+Además, los **rangos** en la mayoría de las variables también son similares, lo que indica que la dispersión de los precios es comparable en todas las categorías. Los **bigotes** también muestran un intervalo de precios similares, lo que confirma la **homogeneidad** en el comportamiento de los precios entre las diferentes variables.
+
+En resumen, estos resultados sugieren que las variables seleccionadas no tienen una relación fuerte con el precio de los computadores. Por lo tanto, sería necesario reconsiderar elegir otras variables y crear interacciones entre ellas.
+
+## 2. Análisis de multicolinealidad
+
+### Ajuste modelo inicial
+
+Crearemos primero un módelo de regresión lineal con las variables cuantitativas y observaremos luego su resumen de datos junto con el vif y una grafica para verificar que no se presenten problemas de multicolinealidad. Para analizar estas variables cuatitativas crearemos un subset con estas variables y así crear una base de datos aparte solo con estas.
+
+```{r}
+var_cuanti <- subset(LLL, select= c( 'Peso', 'Bateria', 'Precio'))
+```
+
+```{r}
+library(car)
+library(GGally)
+
+m <- lm(Precio ~ . - Modelo, data= LLL)
+
+m1 <- lm(Precio ~ . , data= var_cuanti)
+
+```
+
+```{r}
+summary(m1)
+```
+
+-   Del summary podemos observar que el valor P del peso es 0.629, lo que indica que este coeficiente no es significativo, y la bateria al igual que el anterior, su valor p es 0.617, indicando que este tampoco es significativo. El R cuadrado es 0.0001634, lo que indica que el modelo explica solo un 0.01634% de la variabilidad en el precio. Esto es extremadamente bajo, lo que indica que el modelo no es capaz de predecir la variabilidad en los precios de las laptops basándose en el peso y la duración de la batería.
+
+```{r}
+vif(m1)
+```
+
+Dado que nuestros VIF son muy cercanos a 1, podemos tener el indicativo de que no hay problemas de multicolinealidad en el modelo y las variables cualitativas no están correlacionadas entre si, por lo que no es necesario realizar ningún ajuste o eliminar variables debido a este problema.
+
+### Análisis gráfico de las variables cuantitativas
+
+Podemos concluir así, que nuestras variables cuantitativas, no tienen correlación con el precio de los computadores. Las correlaciones entre la bateria y el peso son prácticamente nulas, con una correlacion debil y inversa. Esto confirma que no hay problemas de multicolianealidad.
+
+```{r}
+ggpairs(var_cuanti)
+```
+
+## 3. Creación de nuevo modelo ajustado
+
+Ajustamos ahora un nuevo modelo sobre el que vamos a trabajar. Para este caso usaremos solo la variable de Garantia para predecir el precio de los computadores. Haremos nuevamente un resumen para analizar su significancia respecto a nuestra variable respuesta y así evaluar el impacto de cada una y que tan bien podrían ajustarse al modelo creado.
+
+```{r}
+modelo1<- lm(formula = Precio ~ Garantia, data = LLL)
+summary(modelo1)
+
+```
+
+Podemos observar que para los 2 años de garantía es significativo con un P = 0.041 menor al nivel de significancia de un 0.05, el modelo presenta un error estándar de 719.5, lo que indica que las predicciones del modelo pueden variar por mucho respecto a los precios reales. También solo el 0.01015% de la variación en el precio se explica por las variables independientes del modelo. Esto indica que el modelo no se ajusta bien a los datos y que podría haber otros factores no considerados que influyan en el precio.
+
+### Validacion y análisis de supuestos de la base de datos
+
+#### Normalidad
+
+Los residuales serán estandarizados para realizar las pruebas de normalidad, y evaluaremos su valor P para determinar si cumple con normalidad.
+
+```{r}
+LLL$residuales <- rstandard(modelo1)
+
+library(tseries)
+library(nortest)
+library(ggplot2)
+library(car)
+
+shapiro.test(modelo1$residuals)
+ad.test(modelo1$residuals)
+jarque.bera.test(modelo1$residuals)
+
+```
+
+Observemos que nuestros valores P se encuentran por debajo del valor de significancia, por tanto no cumple normalidad. Analizaremos ahora graficamente este supuesto para observar si se encuentra entre la banda de confianza.
+
+```{r}
+qqPlot(modelo1$residuals, xlab = 'Cuantiles de distribucion normal',
+       ylab = 'Cuantiles de residuales', pch = 16, col = "dodgerblue1",
+       col.lines = "red")
+# si esta entre banda de confianza, tiene normalidad 
+```
+
+El modelo no cumple con el supuesto de normalidad, estadisticamente su p- value es menor al nivel de significancia, y graficamente los datos observados no estan contenidos dentro de la region cercana a la pendiente
+
+#### Homocedasticidad
+
+```{r}
+library(lmtest)
+bptest(modelo1)
+
+```
+
+El modelo Si cumple con el supuesto de homocedasticidad, su p-value es mayor al nivel de significancia. Por tanto nuestro modelo es homocedastico. Observemos ahora con el gráfico, si identificamos algún patrón que pueda explicar la heterocedasticidad.
+
+```{r}
+rees <- rstandard(modelo1)
+
+LLL$Valores_Ajustados <- modelo1$fitted.values
+
+ggplot(LLL, aes(x=Valores_Ajustados, y=rees)) + 
+  geom_point(color= 'black', size= 2)+
+  geom_hline(yintercept = c(-3.5,0,3.5), linetype= 'dotted',
+             color="blue", size= 1)
+```
+
+#### Independencia
+
+```{r}
+library(lmtest)
+bgtest(modelo1)
+dwtest(modelo1)
+```
+
+El modelo cumple con el supuesto de independencia, estadisticamente sus dos pruebas son mayores al nivel de significancia, aunque, en el test de Durbin-Watson el p-value es un valor muy cercano al de significancia, siendo un poco preocupante e importante analizar para errores futuros. Para eso haremos una grafica.
+
+De la grafica podemos ver que los datos estan dispersos y no siguen algún patron, esto nos confirma que se cumple el supuesto de independencia.
+
+```{r}
+library(ggplot2)
+
+ggplot(data = data.frame(index = seq_along(residuals(modelo1)), residuals = residuals(modelo1)), 
+       aes(x = index, y = residuals)) +
+  geom_point(color = "dodgerblue") +
+  geom_hline(yintercept = 0, color = "red", linetype = "dashed") +
+  labs(x = "Índice de observación", y = "Residuos", 
+       title = "Gráfico de dispersión de residuos vs índice de observación") +
+  theme_minimal()
+```
+
+### Puntos de influencia y outliers para modelo ajustado
+
+Como en el modelo anterior no era valido, ya que no cumplia todos los supuestos analizaremos los puntos de influencia, para comprobar si de este modo se puede mejorar el modelo y conseguir que cumpla los supuestos para poder realizar la seleccion de variables y el training, test.
+
+Analizamos ahora con la distancia cook los puntos influyentes que puedan estar afectando nuestro modelo, y posteriormente, eliminaremos estos puntos para observar su impacto en el modelo.
+
+```{r}
+# Puntos influyentes
+cooks_distances <- cooks.distance(modelo1)
+puntos_influyentes <- which(cooks_distances > (4 / nrow(LLL)))
+print(puntos_influyentes)
+
+```
+
+Para este modelo no hemos encontrado puntos de influencia que podrían estar afectando la significancia del modelo. Más adelante observaremos otros modelos en los que analizaremos sus puntos de influencia. Como en este caso no eliminamos puntos de influencia, directamente podemos decir que el modelo no se puede ajustar de tal modo que sea valido en su totalidad, se puede ajustar con otros metodos, pero no con los vistos en clase.
+
+## 4. Selección de variables para el modelo
+
+Aún no logramos llegar a un modelo que logre explicar el precio de las computadores según sus especificaciones técnicas. Por tal razón, usaremos ahora el método STEP, con el cual realizaremos la selección de variables y así, evaluaremos varios modelos de forma iterativa.
+
+Aqui terminamos, ya que para poder seguir con el training y test debemos tener un modelo valido, ya que ahi encontraremos el mejor modelo para poder hacer predicciones de la variable respuesta con respecto a mis otras variables
+
+```{r}
+modb<- step(modelo1, trace = T, direction = "backward")
+modb
+summary(modb)
+
+modf<-step(modelo1, trace = T, direction = "both")
+modf
+```
+
+## 5. Análisis de otros modelos
+
+Aún no logramos llegar a un modelo que logre explicar el precio de las computadoras
+
+#### Modelo 2
+
+En este caso analizaremos modelo que incluye como variables regresoras: Bateria, Peso y Garantia
+
+```{r}
+modelo2<- lm(formula = Precio ~ Bateria + Peso + Garantia, data = LLL)
+```
+
+### Validacion del modelo 2
+
+Comprobemos los supuestos de este modelo 2
+
+#### Normalidad modelo 2
+
+```{r}
+LLL$residuales <- rstandard(modelo2)
+
+library(tseries) 
+library(nortest)
+library(ggplot2)
+library(car)
+```
+
+```{r}
+shapiro.test(modelo2$residuals)
+ad.test(modelo2$residuals)
+jarque.bera.test(modelo2$residuals)
+
+qqPlot(modelo2$residuals, xlab = 'Cuantiles de distribucion normal', ylab = 'Cuantiles de residuales', pch = 16, col = "dodgerblue1", col.lines = "red") 
+```
+
+No es normal, podemos ver esto en ambas pruebas, tanto estadisticas como graficas.
+
+#### Homocedasticidad modelo 2
+
+```{r}
+library(lmtest)
+bptest(modelo2)
+```
+
+```{r}
+LLL$residuos_estandarizados <- rstandard(modelo2)
+LLL$valores_ajustados <- modelo2$fitted.values
+
+ggplot(LLL, aes(x = valores_ajustados, y = residuos_estandarizados)) +
+  geom_point(color = "dodgerblue") +    
+  geom_hline(yintercept = c(-3.5,3.5), linetype = "dashed", color = "red") +
+  labs(x = "Valores Ajustados", y = "Residuos Estandarizados") +
+  ggtitle("Gráfico de Residuos vs Valores Ajustados") +
+  theme_minimal()
+
+```
+
+No es homocedastico, en la prueba estadistica aparentemente parece que si, pero a la hora de hacer el grafico podemos ver que los datos no estan dispersos aleatoriamente, y por esto no cumple este supuesto.
+
+#### Independencia modelo 2
+
+```{r}
+library(lmtest)
+bgtest(modelo2)
+dwtest(modelo2)
+```
+
+```{r}
+ggplot(data = data.frame(index = seq_along(residuals(modelo2)), residuals = residuals(modelo2)), 
+       aes(x = index, y = residuals)) +
+  geom_point(color = "dodgerblue") +
+  geom_hline(yintercept = 0, color = "red", linetype = "dashed") +
+  labs(x = "Índice de observación", y = "Residuos", 
+       title = "Gráfico de dispersión de residuos vs índice de observación") +
+  theme_minimal()
+```
+
+Si es independiente, en la prueba estadistica y grafica podemos ver que los datos si estan dispersos aleatoriamente, y por esto cumple este supuesto.
+
+#### Modelo 2 sin puntos de influencia
+
+Despues analizaremos los outliers para ver si eliminandolos el modelo va a cumplir los supuestos de normalidad, homocedasticidad e independencia.
+
+```{r}
+cooks_distances <- cooks.distance(modelo2)
+puntos_influyentes <- which(cooks_distances > (4 / nrow(LLL)))
+print(puntos_influyentes)
+
+LLL2 <- LLL[-puntos_influyentes, ]
+```
+
+Volvamos a verificar si el modelo ya es valido
+
+```{r}
+modelo22<- lm(formula = Precio ~ Bateria + Peso + Garantia, data = LLL2)
+summary(modelo22)
+```
+
+### Validacion del modelo 2 sin puntos de influencia
+
+#### Normalidad modelo 2 sin puntos de influencia
+
+```{r}
+LLL2$residuales <- rstandard(modelo22)
+
+
+library(tseries)
+library(nortest)
+library(ggplot2)
+library(car)
+```
+
+Sigue sin cumplir normalidad.
+
+```{r}
+shapiro.test(modelo22$residuals)
+ad.test(modelo22$residuals)
+jarque.bera.test(modelo22$residuals)
+
+qqPlot(modelo22$residuals, xlab = 'Cuantiles de distribucion normal',
+       ylab = 'Cuantiles de residuales', pch = 16, col = "dodgerblue1",
+       col.lines = "red")
+```
+
+#### Homocedasticidad modelo 2 sin puntos de influencia
+
+Sigue sin cumplir homocedasticidad.
+
+```{r}
+
+library(lmtest)
+bptest(modelo22)
+
+LLL2$residuos_estandarizados <- rstandard(modelo22)
+LLL2$valores_ajustados <- modelo22$fitted.values
+
+
+ggplot(LLL2, aes(x = valores_ajustados, y = residuos_estandarizados)) +
+  geom_point(color = "dodgerblue") +      
+  geom_hline(yintercept = c(-3.5,3.5), linetype = "dashed", color = "red") + 
+  labs(x = "Valores Ajustados", y = "Residuos Estandarizados") +
+  ggtitle("Gráfico de Residuos vs Valores Ajustados") +
+  theme_minimal()
+
+```
+
+#### Independencia modelo 2 sin puntos de influencia
+
+Sigue cumpliendo independencia.
+
+```{r}
+
+library(lmtest)
+bgtest(modelo22)
+dwtest(modelo22)
+
+ggplot(data = data.frame(index = seq_along(residuals(modelo22)), residuals = residuals(modelo22)), 
+       aes(x = index, y = residuals)) +
+  geom_point(color = "dodgerblue") +
+  geom_hline(yintercept = 0, color = "red", linetype = "dashed") +
+  labs(x = "Índice de observación", y = "Residuos", 
+       title = "Gráfico de dispersión de residuos vs índice de observación") +
+  theme_minimal()
+```
+
+#### Modelo 3
+
+En este otro caso analizaremos este modelo que incluye como variables regresoras: Almacenamiento, Peso y Garantia.
+
+```{r}
+
+modelo3<- lm(formula = Precio ~ Almacenamiento + Peso + Garantia, data = LLL)
+summary(modelo3)
+```
+
+### Validacion del modelo 3
+
+Comprobemos los supuestos de este modelo 3.
+
+#### Normalidad modelo 3
+
+El modelo 3 no cumple normalidad, la prueba grafica y las estadisticas nos lo demuestran.
+
+```{r}
+shapiro.test(modelo3$residuals)
+ad.test(modelo3$residuals)
+jarque.bera.test(modelo3$residuals)
+```
+
+```{r}
+
+qqPlot(modelo3$residuals, xlab = 'Cuantiles de distribucion normal', ylab = 'Cuantiles de residuales', pch = 16, col = "dodgerblue1", col.lines = "red") 
+```
+
+#### Homocedasticidad modelo 3
+
+No es homocedastico, en la prueba estadistica dice que si, pero a la hora de hacer el grafico podemos ver que los datos no estan dispersos aleatoriamente, y por esto no cumple este supuesto.
+
+```{r}
+library(lmtest)
+bptest(modelo3)
+```
+
+```{r}
+
+LLL$residuos_estandarizados <- rstandard(modelo3)
+LLL$valores_ajustados <- modelo3$fitted.values
+
+ggplot(LLL, aes(x = valores_ajustados, y = residuos_estandarizados)) +
+  geom_point(color = "dodgerblue") +
+  geom_hline(yintercept = c(-3.5,3.5), linetype = "dashed", color = "red") + 
+  labs(x = "Valores Ajustados", y = "Residuos Estandarizados") +
+  ggtitle("Gráfico de Residuos vs Valores Ajustados") +
+  theme_minimal()
+
+```
+
+#### Independencia modelo 3
+
+Cumple independencia, las preubas graficas y estadisticas nos lo demuestran.
+
+```{r}
+library(lmtest)
+bgtest(modelo3)
+dwtest(modelo3)
+```
+
+```{r}
+ggplot(data = data.frame(index = seq_along(residuals(modelo3)), residuals = residuals(modelo3)), 
+       aes(x = index, y = residuals)) +
+  geom_point(color = "dodgerblue") +
+  geom_hline(yintercept = 0, color = "red", linetype = "dashed") +
+  labs(x = "Índice de observación", y = "Residuos", 
+       title = "Gráfico de dispersión de residuos vs índice de observación") +
+  theme_minimal()
+```
+
+#### Modelo 3 sin puntos de influencia
+
+Despues analizaremos los outliers para ver si eliminandolos el modelo va a cumplir los supuestos de normalidad, homocedasticidad e independencia.
+
+```{r}
+cooks_distances <- cooks.distance(modelo3)
+puntos_influyentes <- which(cooks_distances > (4 / nrow(LLL)))
+print(puntos_influyentes)
+
+LLL3 <- LLL[-puntos_influyentes, ]
+```
+
+Volvamos a verificar si el modelo ya es valido.
+
+```{r}
+modelo33<- lm(formula = Precio ~ Bateria + Peso + Garantia, data = LLL3)
+summary(modelo33)
+```
+
+### Validacion del modelo 3 sin puntos de influencia
+
+#### Normalidad modelo 3 sin puntos de influencia
+
+Sigue sin cumplir normalidad.
+
+```{r}
+LLL3$residuales <- rstandard(modelo33)
+
+
+library(tseries)
+library(nortest)
+library(ggplot2)
+library(car)
+```
+
+```{r}
+shapiro.test(modelo33$residuals)
+ad.test(modelo33$residuals)
+jarque.bera.test(modelo33$residuals)
+
+qqPlot(modelo33$residuals, xlab = 'Cuantiles de distribucion normal',
+       ylab = 'Cuantiles de residuales', pch = 16, col = "dodgerblue1",
+       col.lines = "red")
+```
+
+#### Homocedasticidad modelo 3 sin puntos de influencia
+
+Sigue sin cumplir homocedasticidad.
+
+```{r}
+library(lmtest)
+bptest(modelo33)
+
+LLL3$residuos_estandarizados <- rstandard(modelo33)
+LLL3$valores_ajustados <- modelo33$fitted.values
+
+
+ggplot(LLL3, aes(x = valores_ajustados, y = residuos_estandarizados)) +
+  geom_point(color = "dodgerblue") +  
+  geom_hline(yintercept = c(-3.5,3.5), linetype = "dashed", color = "red") +
+  labs(x = "Valores Ajustados", y = "Residuos Estandarizados") +
+  ggtitle("Gráfico de Residuos vs Valores Ajustados") +
+  theme_minimal()
+
+```
+
+#### Independencia modelo 3 sin puntos de influencia
+
+Sigue siendo independiente.
+
+```{r}
+library(lmtest)
+bgtest(modelo33)
+dwtest(modelo33)
+
+ggplot(data = data.frame(index = seq_along(residuals(modelo33)), residuals = residuals(modelo33)), 
+       aes(x = index, y = residuals)) +
+  geom_point(color = "dodgerblue") +
+  geom_hline(yintercept = 0, color = "red", linetype = "dashed") +
+  labs(x = "Índice de observación", y = "Residuos", 
+       title = "Gráfico de dispersión de residuos vs índice de observación") +
+  theme_minimal()
+```
+
+### ¿Los modelos cumplen los supuestos y son validos?
+
+Como observamos en los dos modelo planteados anteriormente, estos no cumplen los supuestos, y a la hora de eliminar sus puntos de influencia, estos solo mejoraban un poco son valores, pero era una mejora casi insignifiacnte, es por ello que no podemos seguir avanzando a los otros pasos de un modelo de regresion lineal multiple, para poder avanzar tendriamos que encontrar un modelo valido, cosa que no pudimos hacer aqui.
+
+Pudimos observar que, al eliminar los puntos de influencia en los dos modelos, la influencia no era significativa para explicar porqué nuestras variables no logran explicar aún el precio de las computadoras.
+
+### ¿Pruebas train y test?
+
+No podemos proceder con la prueba de train y test, ya que ninguno de los modelos planteados es valido, por esta razon tampoco amerita realizar la seleccion de variables, ya que no vamos a llegar a un buen modelo que prediga nuestros precios de laptops.
+
+## Conclusion
+
+No hay modelo que nos conduzca a una buena predicción del precio de laptops, no encontramos un buen modelo debido a la ausencia de una buena relación entre algunas de las 11 variables cualitativas y cuantitativas que tenemos, con lo que hemos visto en el curso no fue suficiente para ajustar el modelo y lograr que mejore, el modelo se puede mejorar mediante metodos no vistos en clase. Se puede concluir que las variables no afectan el precio del computador, el mejor modelo tiene un x% de capacidad predictora...
+
+(Entre los modelos analizados busque cuales son los que mejor predicen el modelo, y cual variable, puede que la variable no funcione, pero lo del modelo si, el que tenga los valores mas altos.
+
+Para colocarlo en la conclusion.)
+
+## Referencias
+
+[@GGally; @ggplot2; @car; @carData; @lmtest; @tseries; @nortest]
